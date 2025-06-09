@@ -5,6 +5,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
+import path from 'path';
 
 import { IkasScraper } from './scraper/core.js';
 import { FileCache } from './cache/file-cache.js';
@@ -15,7 +16,7 @@ import { ToolHandlers } from './mcp/tool-handlers.js';
 const scraper = new IkasScraper();
 // Use absolute path for cache when running from Claude Desktop
 const cacheDir = process.env.NODE_ENV === 'production' 
-  ? '/Users/atapinar/CODE/project/ikas-docs-scraper-mcp/cache'
+  ? path.join(process.cwd(), 'cache')
   : './cache';
 const cache = new FileCache(cacheDir);
 const toolHandlers = new ToolHandlers(scraper, cache);
