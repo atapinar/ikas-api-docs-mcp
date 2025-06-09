@@ -1,0 +1,37 @@
+{
+  "name": "ikas-docs-scraper-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for scraping and serving ikas.dev documentation",
+  "main": "build/index.js",
+  "bin": {
+    "ikas-docs-scraper": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "mcp:test": "npx @modelcontextprotocol/inspector node build/index.js",
+    "mcp:test:alt": "CLIENT_PORT=6280 SERVER_PORT=6281 npx @modelcontextprotocol/inspector node build/index.js",
+    "test": "jest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "axios": "^1.9.0",
+    "cheerio": "^1.1.0",
+    "puppeteer": "^24.10.0",
+    "zod": "^3.25.56"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.30",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
+    "typescript": "^5.8.3"
+  }
+}
