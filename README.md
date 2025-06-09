@@ -4,60 +4,70 @@
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-MCP server for scraping and serving ikas.dev documentation to LLMs. Provides instant access to ikas API documentation, GraphQL schemas, and code examples through the Model Context Protocol.
+🇹🇷 Türkçe | [🇬🇧 English](./README-EN.md)
 
-## Installation
+ikas.dev dokümantasyonunu LLM'lere sunan MCP sunucusu. Model Context Protocol aracılığıyla ikas API dokümantasyonuna, GraphQL şemalarına ve kod örneklerine anında erişim sağlar.
+
+## ⚠️ Önemli Uyarı
+
+Bu, **bağımsız olarak geliştirilmiş** bir MCP sunucusudur ve bireysel bir geliştirici tarafından oluşturulmuştur. **ikas ile herhangi bir bağlantım yoktur** ve ikas'ta çalışmıyorum. Bu araç, geliştirici topluluğu için olduğu gibi sunulmaktadır. Bu MCP sunucusuyla ilgili teknik sorunlar için lütfen bu repository'de issue açın - ikas destek ekibiyle iletişime geçmeyin çünkü bu araçtan sorumlu değiller.
+
+## Yıldız Geçmişi
+
+[![Star History Chart](https://api.star-history.com/svg?repos=atapinar/ikas-api-docs-mcp&type=Date)](https://star-history.com/#atapinar/ikas-api-docs-mcp&Date)
+
+## Kurulum
 
 ```bash
-# Clone the repository
+# Repository'yi klonlayın
 git clone https://github.com/atapinar/ikas-api-docs-mcp.git
 cd ikas-api-docs-mcp
 
-# Install dependencies
+# Bağımlılıkları yükleyin
 npm install
 
-# Build the project
+# Projeyi derleyin
 npm run build
 
-# Run initial crawl (optional but recommended)
+# İlk taramayı yapın (opsiyonel ama tavsiye edilir)
 node build/demo-workflow.js
 ```
 
-## Phase 1 Complete ✓
+## Faz 1 Tamamlandı ✓
 
-Successfully implemented:
-- ✓ Project setup with TypeScript and all dependencies
-- ✓ Basic scraper that fetches pages (supports both static and JS-rendered content)
-- ✓ File-based cache system with full CRUD operations
-- ✓ Minimal MCP server with basic tools
+Başarıyla tamamlanan özellikler:
+- ✓ TypeScript ve tüm bağımlılıklarla proje kurulumu
+- ✓ Hem statik hem de JS-render edilmiş sayfaları destekleyen temel scraper
+- ✓ Tam CRUD işlemli dosya tabanlı önbellek sistemi
+- ✓ Temel araçlarla minimal MCP sunucusu
 
-## Phase 2 Complete ✓
+## Faz 2 Tamamlandı ✓
 
-Enhanced extraction and MCP tools:
-- ✓ Smart content extraction with structured data
-- ✓ GraphQL schema parsing and analysis
-- ✓ Code example extraction
-- ✓ API endpoint discovery
-- ✓ 11 specialized MCP tools
+Gelişmiş içerik çıkarma ve MCP araçları:
+- ✓ Yapılandırılmış veriyle akıllı içerik çıkarma
+- ✓ GraphQL şema ayrıştırma ve analizi
+- ✓ Kod örneği çıkarma
+- ✓ API endpoint keşfi
+- ✓ 11 özelleştirilmiş MCP aracı
 
-## Phase 3 Complete ✓
+## Faz 3 Tamamlandı ✓
 
-Search & Discovery:
-- ✓ Smart crawler that discovers documentation pages automatically
-- ✓ Full-text search index with keyword extraction
-- ✓ GraphQL type indexing for fast lookups
-- ✓ Advanced search with category and type filtering
-- ✓ Automatic index rebuilding after crawls
-- ✓ 14 total MCP tools including:
-  - `crawl_site`: Discover and cache documentation pages
-  - `rebuild_index`: Rebuild search index from cache
-  - `search_advanced`: Advanced search with filters
+Arama ve Keşif:
+- ✓ Dokümantasyon sayfalarını otomatik keşfeden akıllı tarayıcı
+- ✓ Anahtar kelime çıkarmalı tam metin arama indeksi
+- ✓ Hızlı aramalar için GraphQL tip indeksleme
+- ✓ Kategori ve tip filtrelemeli gelişmiş arama
+- ✓ Taramalardan sonra otomatik indeks yenileme
+- ✓ Toplam 14 MCP aracı:
+  - `crawl_site`: Dokümantasyon sayfalarını keşfet ve önbelleğe al
+  - `rebuild_index`: Arama indeksini yeniden oluştur
+  - `search_advanced`: Filtreli gelişmiş arama
 
-## Quick Start
+## Hızlı Başlangıç
 
-### With Claude Desktop
+### Claude Desktop ile
 
-1. Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+1. Claude Desktop config dosyanıza ekleyin (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
@@ -73,109 +83,109 @@ Search & Discovery:
 }
 ```
 
-2. Restart Claude Desktop
+2. Claude Desktop'ı yeniden başlatın
 
-3. Use the tools in your conversations!
+3. Sohbetlerinizde araçları kullanın!
 
-### With MCP Inspector
+### MCP Inspector ile
 
 ```bash
-# Test locally
+# Yerel test
 npm run mcp:test
 
-# Or with custom ports
+# Veya özel portlarla
 npm run mcp:test:alt
 ```
 
-## Test the MCP Server
+## MCP Sunucusunu Test Edin
 
-1. Using MCP Inspector:
+1. MCP Inspector kullanarak:
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
-2. Configure Claude Desktop:
-Copy the contents of `claude_desktop_config.json` to your Claude Desktop configuration.
+2. Claude Desktop'ı yapılandırın:
+`claude_desktop_config.json` içeriğini Claude Desktop yapılandırmanıza kopyalayın.
 
-## Available Tools
+## Mevcut Araçlar
 
-### Basic Tools
-- **get_page**: Fetches any ikas documentation page or playground with enhanced extraction
-- **search_docs**: Fast indexed search through all cached pages
-- **search_advanced**: Search with category/type filters
-- **cache_stats**: Shows cache statistics and cached URLs
+### Temel Araçlar
+- **get_page**: Herhangi bir ikas dokümantasyon sayfasını veya playground'u gelişmiş çıkarmayla getirir
+- **search_docs**: Tüm önbelleğe alınmış sayfalarda hızlı indeksli arama
+- **search_advanced**: Kategori/tip filtreleriyle arama
+- **cache_stats**: Önbellek istatistiklerini ve URL'lerini gösterir
 
-### GraphQL Tools
-- **find_graphql_type**: Finds type definitions (Product, Order, etc.)
-- **find_mutation**: Finds mutations (create product, update order, etc.)
-- **find_query**: Find queries for data fetching
-- **find_code_example**: Finds code examples by topic and language
+### GraphQL Araçları
+- **find_graphql_type**: Tip tanımlarını bulur (Product, Order, vb.)
+- **find_mutation**: Mutation'ları bulur (ürün oluştur, sipariş güncelle, vb.)
+- **find_query**: Veri çekme için query'leri bulur
+- **find_code_example**: Konuya ve dile göre kod örnekleri bulur
 
-### Discovery Tools
-- **crawl_site**: Automatically discover and cache documentation pages
-- **rebuild_index**: Rebuild the search index
-- **list_categories**: Lists all documentation categories
+### Keşif Araçları
+- **crawl_site**: Dokümantasyon sayfalarını otomatik keşfet ve önbelleğe al
+- **rebuild_index**: Arama indeksini yeniden oluştur
+- **list_categories**: Tüm dokümantasyon kategorilerini listeler
 
-### Coming Soon
-- **get_field_info**: Get detailed field information
-- **get_api_endpoint**: Get API endpoint info
-- **explain_error**: Explain errors with solutions
+### Yakında
+- **get_field_info**: Detaylı alan bilgisi al
+- **get_api_endpoint**: API endpoint bilgisi al
+- **explain_error**: Hataları çözümleriyle açıkla
 
-## Usage Examples
+## Kullanım Örnekleri
 
-### First Time Setup
+### İlk Kurulum
 
-1. **Crawl the documentation** (builds your local cache):
+1. **Dokümantasyonu tarayın** (yerel önbelleğinizi oluşturur):
 ```json
 crawl_site { "maxPages": 50 }
 ```
 
-2. **Search for specific topics**:
+2. **Belirli konuları arayın**:
 ```json
-search_docs { "query": "product variants" }
+search_docs { "query": "ürün varyantları" }
 ```
 
-3. **Find GraphQL types**:
+3. **GraphQL tiplerini bulun**:
 ```json
 find_graphql_type { "typeName": "Product" }
 ```
 
-4. **Find mutations**:
+4. **Mutation'ları bulun**:
 ```json
 find_mutation { "action": "create", "entity": "product" }
 ```
 
-5. **Get specific documentation**:
+5. **Belirli dokümantasyonu alın**:
 ```json
 get_page { "url": "https://ikas.dev/docs/api/admin-api/products" }
 ```
 
-## Development
+## Geliştirme
 
 ```bash
-# Run in development mode
+# Geliştirme modunda çalıştır
 npm run dev
 
-# Run tests
+# Testleri çalıştır
 npm test
 
-# Type checking
+# Tip kontrolü
 npm run typecheck
 
 # Lint
 npm run lint
 ```
 
-## Contributing
+## Katkıda Bulunma
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Katkılarınızı bekliyoruz! Lütfen Pull Request göndermekten çekinmeyin.
 
-## License
+## Lisans
 
 MIT
 
-## Acknowledgments
+## Teşekkürler
 
-- Built with [Model Context Protocol](https://modelcontextprotocol.io)
-- Powered by [Puppeteer](https://pptr.dev/) and [Cheerio](https://cheerio.js.org/)
-- Created for the [ikas](https://ikas.dev) developer community
+- [Model Context Protocol](https://modelcontextprotocol.io) ile geliştirildi
+- [Puppeteer](https://pptr.dev/) ve [Cheerio](https://cheerio.js.org/) tarafından destekleniyor
+- [ikas](https://ikas.dev) geliştirici topluluğu için oluşturuldu
