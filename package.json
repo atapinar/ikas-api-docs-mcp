@@ -16,9 +16,9 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["mcp", "ikas", "api", "documentation", "scraper"],
+  "author": "Ata Pınar",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
