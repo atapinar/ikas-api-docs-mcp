@@ -6,18 +6,28 @@ import {
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { IkasScraper } from './scraper/core.js';
 import { FileCache } from './cache/file-cache.js';
 import { toolDefinitions, toolSchemas } from './mcp/tools.js';
 import { ToolHandlers } from './mcp/tool-handlers.js';
 
+// Get the directory of this file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Initialize components
 const scraper = new IkasScraper();
 // Use absolute path for cache when running from Claude Desktop
 const cacheDir = process.env.NODE_ENV === 'production' 
-  ? path.join(process.cwd(), 'cache')
+  ? path.join(__dirname, '..', 'cache')
   : './cache';
+
+console.error(`[MCP] Cache directory resolved to: ${cacheDir}`);
+console.error(`[MCP] Current directory: ${process.cwd()}`);
+console.error(`[MCP] Script directory: ${__dirname}`);
+
 const cache = new FileCache(cacheDir);
 const toolHandlers = new ToolHandlers(scraper, cache);
 
