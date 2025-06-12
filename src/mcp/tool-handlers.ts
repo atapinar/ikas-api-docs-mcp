@@ -154,63 +154,111 @@ export class ToolHandlers {
     const { action, entity } = toolSchemas.findMutation.parse(args);
     
     const urls = await this.cache.list();
-    const mutations: Array<{ url: string; name: string; schema: any }> = [];
+    const mutations: Array<{ url: string; name: string; description?: string; example?: string }> = [];
     
     // Common mutation patterns
-    const patterns = [
-      `${action}${entity}`,
-      `${entity}${action}`,
-      `save${entity}`,
-      `${action}${entity}s`,
-      `${entity}Create`,
-      `${entity}Update`,
-      `${entity}Delete`
-    ];
+    const actionMap: Record<string, string[]> = {
+      'create': ['create', 'save', 'add', 'new'],
+      'update': ['update', 'save', 'edit', 'modify'],
+      'delete': ['delete', 'remove', 'destroy']
+    };
+    
+    const searchTerms = actionMap[action.toLowerCase()] || [action.toLowerCase()];
+    const entityLower = entity.toLowerCase();
     
     for (const url of urls) {
       const entry = await this.cache.get(url);
-      if (!entry?.page.extractedContent) continue;
+      if (!entry) continue;
       
-      const extracted = entry.page.extractedContent as ExtractedContent;
+      // Search in page content for mutations
       
-      for (const schema of extracted.graphqlSchemas) {
-        if (schema.type !== 'mutation') continue;
+      // Look for mutation patterns in content
+      const mutationRegex = /mutation[s]?\s*[​]?\s*([a-zA-Z0-9_]+)/gi;
+      let match;
+      
+      while ((match = mutationRegex.exec(entry.page.content)) !== null) {
+        const mutationName = match[1];
+        const mutationNameLower = mutationName.toLowerCase();
         
-        if (schema.fields) {
-          for (const field of schema.fields) {
-            for (const pattern of patterns) {
-              if (field.name.toLowerCase().includes(pattern.toLowerCase())) {
-                mutations.push({
-                  url,
-                  name: field.name,
-                  schema: field
-                });
-                break;
+        // Check if mutation matches our search criteria
+        const matchesEntity = mutationNameLower.includes(entityLower) || 
+                             entityLower.includes(mutationNameLower.replace(/s$/, ''));
+        const matchesAction = searchTerms.some(term => mutationNameLower.includes(term));
+        
+        if (matchesEntity && matchesAction) {
+          // Extract context around the mutation
+          const contextStart = Math.max(0, match.index - 200);
+          const contextEnd = Math.min(entry.page.content.length, match.index + 500);
+          const context = entry.page.content.substring(contextStart, contextEnd);
+          
+          mutations.push({
+            url,
+            name: mutationName,
+            description: context.substring(0, 200) + '...',
+            example: this.extractMutationExample(context, mutationName)
+          });
+        }
+      }
+      
+      // Also check in code examples
+      if (entry.page.extractedContent) {
+        const extracted = entry.page.extractedContent as ExtractedContent;
+        
+        for (const example of extracted.codeExamples) {
+          if (example.language === 'graphql' || example.code.includes('mutation')) {
+            const codeLower = example.code.toLowerCase();
+            
+            searchTerms.forEach(term => {
+              if (codeLower.includes(term) && codeLower.includes(entityLower)) {
+                // Extract mutation name from code
+                const mutationMatch = example.code.match(/mutation\s+(\w+)|(\w+)\s*\(/);
+                if (mutationMatch) {
+                  mutations.push({
+                    url,
+                    name: mutationMatch[1] || mutationMatch[2] || 'Unknown',
+                    description: example.description || example.title,
+                    example: example.code
+                  });
+                }
               }
-            }
+            });
           }
         }
       }
     }
     
-    if (mutations.length === 0) {
+    // Deduplicate mutations by name
+    const uniqueMutations = Array.from(
+      new Map(mutations.map(m => [m.name, m])).values()
+    );
+    
+    if (uniqueMutations.length === 0) {
       return {
         content: [{
           type: 'text',
-          text: `No mutation found for "${action} ${entity}". Try searching documentation pages that contain GraphQL mutations.`
+          text: `No mutations found for "${action} ${entity}". Try:\n` +
+                `- Using different terms (e.g., "save" instead of "create")\n` +
+                `- Searching for the entity directly with search_docs\n` +
+                `- Checking specific API pages with get_page`
         }]
       };
     }
     
-    const mutation = mutations[0];
-    let result = `# Mutation: ${mutation.name}\n\n`;
-    result += `**Operation**: ${action} ${entity}\n`;
-    result += `**Found in**: ${mutation.url}\n\n`;
-    result += `## Signature\n\n\`\`\`graphql\n${mutation.name}: ${mutation.schema.type}\n\`\`\``;
+    let result = `# Mutations for ${action} ${entity}\n\n`;
+    result += `Found ${uniqueMutations.length} matching mutations:\n\n`;
     
-    if (mutation.schema.description) {
-      result += `\n\n## Description\n\n${mutation.schema.description}`;
-    }
+    uniqueMutations.forEach((mutation, i) => {
+      result += `## ${i + 1}. ${mutation.name}\n`;
+      result += `**Source**: ${mutation.url}\n\n`;
+      
+      if (mutation.description) {
+        result += `**Description**: ${mutation.description}\n\n`;
+      }
+      
+      if (mutation.example) {
+        result += `**Example**:\n\`\`\`graphql\n${mutation.example}\n\`\`\`\n\n`;
+      }
+    });
     
     return {
       content: [{
@@ -218,6 +266,22 @@ export class ToolHandlers {
         text: result
       }]
     };
+  }
+  
+  private extractMutationExample(context: string, mutationName: string): string | undefined {
+    // Try to extract a code example from the context
+    const codeMatch = context.match(/```[\s\S]*?```/);
+    if (codeMatch && codeMatch[0].includes(mutationName)) {
+      return codeMatch[0].replace(/```\w*\n?/g, '').trim();
+    }
+    
+    // Try to extract inline mutation syntax
+    const inlineMatch = context.match(new RegExp(`${mutationName}\\s*\\([^)]*\\)[^}]*}`, 'i'));
+    if (inlineMatch) {
+      return inlineMatch[0];
+    }
+    
+    return undefined;
   }
 
   async handleFindCodeExample(args: unknown) {
