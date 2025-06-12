@@ -3,14 +3,17 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ListPromptsRequestSchema,
+  ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { IkasScraper } from './scraper/core.js';
 import { FileCache } from './cache/file-cache.js';
-import { toolDefinitions, toolSchemas } from './mcp/tools.js';
+import { toolDefinitions } from './mcp/tools.js';
 import { ToolHandlers } from './mcp/tool-handlers.js';
 
 // Get the directory of this file
@@ -40,6 +43,8 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      resources: {},
+      prompts: {}
     },
   }
 );
@@ -56,6 +61,120 @@ async function initializeServer() {
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: toolDefinitions
+  };
+});
+
+// Handle resources listing
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  const cachedUrls = await cache.list();
+  const resources = cachedUrls.map(url => ({
+    uri: url,
+    name: url.split('/').pop() || url,
+    description: `Cached documentation page: ${url}`,
+    mimeType: 'text/html'
+  }));
+  
+  return {
+    resources
+  };
+});
+
+// Handle resource reading
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+  
+  try {
+    const content = await cache.get(uri);
+    if (!content) {
+      throw new Error(`Resource not found: ${uri}`);
+    }
+    
+    return {
+      contents: [{
+        uri,
+        mimeType: 'text/html',
+        text: content
+      }]
+    };
+  } catch (error) {
+    throw new Error(`Failed to read resource: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+});
+
+// Handle prompts listing
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: 'generate_graphql_query',
+        description: 'Generate a GraphQL query for ikas API',
+        arguments: [
+          {
+            name: 'entity',
+            description: 'The entity to query (e.g., products, orders, customers)',
+            required: true
+          },
+          {
+            name: 'fields',
+            description: 'Fields to retrieve (comma-separated)',
+            required: true
+          },
+          {
+            name: 'filters',
+            description: 'Optional filters to apply',
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'find_api_integration',
+        description: 'Find specific API integration examples',
+        arguments: [
+          {
+            name: 'integration_type',
+            description: 'Type of integration (e.g., authentication, webhooks, file upload)',
+            required: true
+          },
+          {
+            name: 'language',
+            description: 'Programming language (e.g., javascript, python, php)',
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'debug_error',
+        description: 'Debug an ikas API error',
+        arguments: [
+          {
+            name: 'error_message',
+            description: 'The error message or code',
+            required: true
+          },
+          {
+            name: 'context',
+            description: 'Context where the error occurred',
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'code_example_generator',
+        description: 'Generate code examples for ikas API operations',
+        arguments: [
+          {
+            name: 'operation',
+            description: 'The operation to generate code for',
+            required: true
+          },
+          {
+            name: 'language',
+            description: 'Target programming language',
+            required: true
+          }
+        ]
+      }
+    ]
   };
 });
 
@@ -80,39 +199,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'find_mutation':
         return await toolHandlers.handleFindMutation(args);
         
-      case 'find_query': {
-        const { entity, operation } = toolSchemas.findQuery.parse(args);
-        // Similar to mutation but for queries
-        return {
-          content: [{
-            type: 'text',
-            text: `Finding query for ${entity} ${operation || ''}...\n\nThis feature is coming soon. For now, use get_page to browse GraphQL documentation.`
-          }]
-        };
-      }
+      case 'find_query':
+        return await toolHandlers.handleFindQuery(args);
         
-      case 'get_field_info': {
-        const { typeName, fieldName } = toolSchemas.getFieldInfo.parse(args);
-        return {
-          content: [{
-            type: 'text',
-            text: `Getting field info for ${typeName}.${fieldName}...\n\nThis feature is coming soon. Use find_graphql_type to see all fields.`
-          }]
-        };
-      }
+      case 'get_field_info':
+        return await toolHandlers.handleGetFieldInfo(args);
         
       case 'find_code_example':
         return await toolHandlers.handleFindCodeExample(args);
         
-      case 'get_api_endpoint': {
-        const { operation } = toolSchemas.getAPIEndpoint.parse(args);
-        return {
-          content: [{
-            type: 'text',
-            text: `Looking for API endpoint for ${operation}...\n\nThis feature is coming soon. Check the extracted API endpoints from get_page.`
-          }]
-        };
-      }
+      case 'get_api_endpoint':
+        return await toolHandlers.handleGetAPIEndpoint(args);
         
       case 'list_categories': {
         const urls = await cache.list();
@@ -133,15 +230,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
         
-      case 'explain_error': {
-        const { error } = toolSchemas.explainError.parse(args);
-        return {
-          content: [{
-            type: 'text',
-            text: `Explaining error: "${error}"...\n\nThis feature is coming soon. Search for the error message using search_docs.`
-          }]
-        };
-      }
+      case 'explain_error':
+        return await toolHandlers.handleExplainError(args);
       
       case 'crawl_site':
         return await toolHandlers.handleCrawlSite(args);

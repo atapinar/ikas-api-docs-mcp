@@ -270,7 +270,9 @@ export class SearchIndex {
 
       // Extract GraphQL type names
       if (extracted.graphqlSchemas && extracted.graphqlSchemas.length > 0) {
-        graphqlTypes = extracted.graphqlSchemas.map(s => s.name).filter(n => n);
+        graphqlTypes = extracted.graphqlSchemas
+          .map(s => s.name)
+          .filter((n): n is string => n !== undefined);
       }
 
       // Extract code languages

@@ -100,9 +100,9 @@ export class ToolHandlers {
       const extracted = entry.page.extractedContent as ExtractedContent;
       
       for (const schema of extracted.graphqlSchemas) {
-        if (schema.name.toLowerCase() === typeName.toLowerCase()) {
+        if (schema.name && schema.name.toLowerCase() === typeName.toLowerCase()) {
           typeMatches.push({ url, schema, exact: true });
-        } else if (schema.name.toLowerCase().includes(typeName.toLowerCase())) {
+        } else if (schema.name && schema.name.toLowerCase().includes(typeName.toLowerCase())) {
           typeMatches.push({ url, schema, exact: false });
         }
       }
@@ -402,5 +402,236 @@ export class ToolHandlers {
     }
     
     return count;
+  }
+
+  async handleFindQuery(args: unknown) {
+    const { entity, operation } = toolSchemas.findQuery.parse(args);
+    
+    const urls = await this.cache.list();
+    const queries: Array<{ url: string; query: string; description?: string }> = [];
+    
+    for (const url of urls) {
+      const entry = await this.cache.get(url);
+      if (!entry?.page.extractedContent) continue;
+      
+      const extracted = entry.page.extractedContent as ExtractedContent;
+      
+      // Search in GraphQL schemas
+      for (const schema of extracted.graphqlSchemas) {
+        const lowerEntity = entity.toLowerCase();
+        const lowerQuery = (schema.query || '').toLowerCase();
+        
+        if (lowerQuery.includes(lowerEntity) || 
+            (operation && lowerQuery.includes(operation.toLowerCase()))) {
+          queries.push({
+            url,
+            query: schema.query || '',
+            description: schema.description
+          });
+        }
+      }
+      
+      // Search in code examples
+      for (const example of extracted.codeExamples) {
+        if (example.language === 'graphql' || example.language === 'gql') {
+          const lowerCode = example.code.toLowerCase();
+          if (lowerCode.includes(entity.toLowerCase()) && lowerCode.includes('query')) {
+            queries.push({
+              url,
+              query: example.code,
+              description: example.description || example.title
+            });
+          }
+        }
+      }
+    }
+    
+    if (queries.length === 0) {
+      return {
+        content: [{
+          type: 'text',
+          text: `No queries found for "${entity}"${operation ? ` with operation "${operation}"` : ''}. Try using search_docs or find_graphql_type.`
+        }]
+      };
+    }
+    
+    let result = `# GraphQL Queries for ${entity}\n\n`;
+    result += `Found ${queries.length} matching queries:\n\n`;
+    
+    queries.slice(0, 5).forEach((q, i) => {
+      result += `## ${i + 1}. ${q.description || 'Query'}\n`;
+      result += `Source: ${q.url}\n\n`;
+      result += `\`\`\`graphql\n${q.query}\n\`\`\`\n\n`;
+    });
+    
+    return {
+      content: [{
+        type: 'text',
+        text: result
+      }]
+    };
+  }
+
+  async handleGetFieldInfo(args: unknown) {
+    const { typeName, fieldName } = toolSchemas.getFieldInfo.parse(args);
+    
+    // First, find the type
+    const urls = await this.cache.list();
+    let typeInfo: any = null;
+    let fieldInfo: any = null;
+    let sourceUrl = '';
+    
+    for (const url of urls) {
+      const entry = await this.cache.get(url);
+      if (!entry?.page.extractedContent) continue;
+      
+      const extracted = entry.page.extractedContent as ExtractedContent;
+      
+      for (const schema of extracted.graphqlSchemas) {
+        if (schema.type?.toLowerCase() === typeName.toLowerCase()) {
+          typeInfo = schema;
+          sourceUrl = url;
+          
+          // Look for field in schema description or other content
+          const schemaText = JSON.stringify(schema);
+          if (schemaText.toLowerCase().includes(fieldName.toLowerCase())) {
+            fieldInfo = { found: true, inSchema: true };
+          }
+          break;
+        }
+      }
+      
+      if (typeInfo) break;
+    }
+    
+    if (!typeInfo) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Type "${typeName}" not found. Use find_graphql_type to list available types.`
+        }]
+      };
+    }
+    
+    let result = `# Field Information: ${typeName}.${fieldName}\n\n`;
+    result += `**Type**: ${typeName}\n`;
+    result += `**Source**: ${sourceUrl}\n\n`;
+    
+    if (typeInfo.description) {
+      result += `## Type Description\n${typeInfo.description}\n\n`;
+    }
+    
+    if (fieldInfo) {
+      result += `## Field Details\n`;
+      result += `The field "${fieldName}" is part of the ${typeName} type.\n\n`;
+      result += `For complete field details, use:\n`;
+      result += `- \`find_graphql_type\` to see all fields of ${typeName}\n`;
+      result += `- \`get_page\` with URL: ${sourceUrl}\n`;
+    } else {
+      result += `⚠️ Field "${fieldName}" not found in ${typeName}.\n\n`;
+      result += `Use \`find_graphql_type {"typeName": "${typeName}"}\` to see available fields.`;
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: result
+      }]
+    };
+  }
+
+  async handleGetAPIEndpoint(args: unknown) {
+    const { operation } = toolSchemas.getAPIEndpoint.parse(args);
+    
+    const urls = await this.cache.list();
+    const endpoints: Array<{ url: string; endpoint: any }> = [];
+    
+    for (const url of urls) {
+      const entry = await this.cache.get(url);
+      if (!entry?.page.extractedContent) continue;
+      
+      const extracted = entry.page.extractedContent as ExtractedContent;
+      
+      for (const endpoint of extracted.apiEndpoints) {
+        const lowerOp = operation.toLowerCase();
+        const endpointStr = JSON.stringify(endpoint).toLowerCase();
+        
+        if (endpointStr.includes(lowerOp)) {
+          endpoints.push({ url, endpoint });
+        }
+      }
+    }
+    
+    if (endpoints.length === 0) {
+      return {
+        content: [{
+          type: 'text',
+          text: `No API endpoints found for operation "${operation}". Try searching with different terms or use search_docs.`
+        }]
+      };
+    }
+    
+    let result = `# API Endpoints for "${operation}"\n\n`;
+    result += `Found ${endpoints.length} matching endpoints:\n\n`;
+    
+    endpoints.slice(0, 10).forEach((e, i) => {
+      result += `## ${i + 1}. ${e.endpoint.method} ${e.endpoint.url}\n`;
+      if (e.endpoint.description) {
+        result += `${e.endpoint.description}\n`;
+      }
+      result += `Source: ${e.url}\n\n`;
+    });
+    
+    return {
+      content: [{
+        type: 'text',
+        text: result
+      }]
+    };
+  }
+
+  async handleExplainError(args: unknown) {
+    const { error } = toolSchemas.explainError.parse(args);
+    
+    // Search for the error in documentation
+    const searchResults = this.searchIndex.search(error, { limit: 5 });
+    
+    let result = `# Error Explanation: "${error}"\n\n`;
+    
+    if (searchResults.length > 0) {
+      result += `## Related Documentation\n\n`;
+      
+      for (const res of searchResults) {
+        result += `### ${res.title}\n`;
+        result += `${res.url}\n`;
+        result += `${res.snippet}\n\n`;
+      }
+      
+      result += `## Common Solutions\n\n`;
+      result += `1. Check the related documentation above for specific error handling\n`;
+      result += `2. Verify your API credentials and permissions\n`;
+      result += `3. Ensure request format matches the API specification\n`;
+      result += `4. Check rate limits and quotas\n\n`;
+    } else {
+      result += `No specific documentation found for this error.\n\n`;
+      result += `## General Troubleshooting Steps\n\n`;
+      result += `1. Search for the error using \`search_docs {"query": "${error}"}\`\n`;
+      result += `2. Check the API reference documentation\n`;
+      result += `3. Verify authentication and authorization\n`;
+      result += `4. Review request/response logs\n`;
+      result += `5. Check ikas status page for any ongoing issues\n\n`;
+    }
+    
+    result += `## Need More Help?\n\n`;
+    result += `- Use \`find_code_example\` to find working examples\n`;
+    result += `- Check specific API endpoints with \`get_api_endpoint\`\n`;
+    result += `- Browse full documentation with \`get_page\``;
+    
+    return {
+      content: [{
+        type: 'text',
+        text: result
+      }]
+    };
   }
 }

@@ -17,8 +17,10 @@ export interface CacheEntry {
 export interface GraphQLSchema {
   raw: string;
   parsed?: any;
-  type: 'query' | 'mutation' | 'type' | 'input' | 'enum' | 'interface';
-  name: string;
+  type?: 'query' | 'mutation' | 'type' | 'input' | 'enum' | 'interface';
+  name?: string;
+  query?: string;
+  description?: string;
   fields?: Array<{
     name: string;
     type: string;

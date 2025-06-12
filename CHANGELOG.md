@@ -1,55 +1,89 @@
-# Changelog
+# Değişiklik Günlüğü
 
-All notable changes to this project will be documented in this file.
+Bu projedeki tüm önemli değişiklikler bu dosyada belgelenecektir.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Format [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) standardına dayanmaktadır
+ve bu proje [Semantic Versioning](https://semver.org/spec/v2.0.0.html) kurallarına uymaktadır.
+
+## [1.1.0] - 2025-01-12
+
+### Eklenenler
+
+#### MCP Protokol Geliştirmeleri
+- **MCP Resources Desteği**: Önbelleğe alınmış dokümantasyon sayfaları artık MCP kaynakları olarak erişilebilir
+  - `ListResourcesRequestSchema` handler eklendi
+  - `ReadResourceRequestSchema` handler eklendi
+  - Tüm önbellek içeriği browsable resource olarak sunuluyor
+  
+- **MCP Prompts Desteği**: Hazır prompt şablonları eklendi
+  - `generate_graphql_query` - GraphQL sorguları oluşturmak için
+  - `find_api_integration` - API entegrasyon örnekleri bulmak için
+  - `debug_error` - ikas API hatalarını debug etmek için
+  - `code_example_generator` - Kod örnekleri oluşturmak için
+
+#### Tamamlanan Araçlar
+- **`find_query`**: GraphQL query'lerini bulma özelliği tam olarak implement edildi
+- **`get_field_info`**: GraphQL type field bilgilerini getirme özelliği eklendi
+- **`get_api_endpoint`**: API endpoint bilgilerini bulma özelliği implement edildi
+- **`explain_error`**: Hata açıklama ve çözüm önerisi özelliği tamamlandı
+
+### Düzeltmeler
+- Claude Desktop'ta çift sunucu konfigürasyonu sorunu çözüldü (ikas-api-docs kaldırıldı)
+- "Server does not support resources" hatası düzeltildi
+- TypeScript tip tanımları güncellendi ve iyileştirildi
+- Null/undefined kontrolleri eklendi
+
+### Teknik İyileştirmeler
+- Server capabilities'e `resources` ve `prompts` yetenekleri eklendi
+- GraphQLSchema interface'i query ve description alanlarını içerecek şekilde güncellendi
+- Daha iyi hata yönetimi ve tip güvenliği sağlandı
 
 ## [1.0.0] - 2025-01-09
 
-### Added
+### Eklenenler
 
-#### Core Features
-- **Smart Web Scraper**: Handles both static and JavaScript-rendered pages using Puppeteer and Cheerio
-- **Intelligent Caching System**: File-based cache for offline access and performance
-- **Enhanced Content Extraction**: Structured parsing of GraphQL schemas, code examples, and API endpoints
-- **Full-Text Search Index**: Fast searching with keyword extraction and relevance scoring
-- **MCP Server Implementation**: Full Model Context Protocol compliance with 14 specialized tools
+#### Temel Özellikler
+- **Akıllı Web Scraper**: Puppeteer ve Cheerio kullanarak hem statik hem de JavaScript-render edilmiş sayfaları işler
+- **Akıllı Önbellekleme Sistemi**: Çevrimdışı erişim ve performans için dosya tabanlı önbellek
+- **Gelişmiş İçerik Çıkarma**: GraphQL şemaları, kod örnekleri ve API endpoint'lerinin yapılandırılmış ayrıştırması
+- **Tam Metin Arama İndeksi**: Anahtar kelime çıkarma ve ilgililik skorlaması ile hızlı arama
+- **MCP Sunucu Uygulaması**: 14 özelleştirilmiş araç ile tam Model Context Protocol uyumluluğu
 
-#### MCP Tools
-- `get_page` - Fetch and cache any ikas.dev documentation page or playground
-- `search_docs` - Fast indexed search through all cached documentation
-- `search_advanced` - Advanced search with category and type filtering
-- `cache_stats` - View cache statistics and cached URLs
-- `find_graphql_type` - Find specific GraphQL type definitions
-- `find_mutation` - Find mutations for specific actions (create, update, delete)
-- `find_query` - Find queries for data fetching
-- `find_code_example` - Find code examples by topic and language
-- `get_api_endpoint` - Get API endpoint information (placeholder)
-- `crawl_site` - Automatically discover and cache documentation pages
-- `rebuild_index` - Rebuild the search index from cache
-- `list_categories` - List all documentation categories
-- `get_field_info` - Get field information (placeholder)
-- `explain_error` - Explain errors and provide solutions (placeholder)
+#### MCP Araçları
+- `get_page` - Herhangi bir ikas.dev dokümantasyon sayfasını veya playground'u getir ve önbelleğe al
+- `search_docs` - Tüm önbelleğe alınmış dokümantasyonda hızlı indeksli arama
+- `search_advanced` - Kategori ve tip filtreleme ile gelişmiş arama
+- `cache_stats` - Önbellek istatistiklerini ve önbelleğe alınmış URL'leri görüntüle
+- `find_graphql_type` - Belirli GraphQL tip tanımlarını bul
+- `find_mutation` - Belirli eylemler için mutation'ları bul (oluştur, güncelle, sil)
+- `find_query` - Veri çekme için query'leri bul
+- `find_code_example` - Konu ve dile göre kod örnekleri bul
+- `get_api_endpoint` - API endpoint bilgilerini al (placeholder)
+- `crawl_site` - Dokümantasyon sayfalarını otomatik keşfet ve önbelleğe al
+- `rebuild_index` - Arama indeksini önbellekten yeniden oluştur
+- `list_categories` - Tüm dokümantasyon kategorilerini listele
+- `get_field_info` - Alan bilgilerini al (placeholder)
+- `explain_error` - Hataları açıkla ve çözüm öner (placeholder)
 
-#### Technical Implementation
-- TypeScript for type-safe development
-- Puppeteer for JavaScript-rendered content
-- Cheerio for HTML parsing
-- Custom search index with GraphQL type indexing
-- Smart crawler with rate limiting and error handling
-- Playground fallback content for authentication-required pages
+#### Teknik Uygulama
+- Tip güvenli geliştirme için TypeScript
+- JavaScript-render edilmiş içerik için Puppeteer
+- HTML ayrıştırma için Cheerio
+- GraphQL tip indeksleme ile özel arama indeksi
+- Rate limiting ve hata yönetimi ile akıllı tarayıcı
+- Kimlik doğrulama gerektiren sayfalar için Playground yedek içeriği
 
-### Performance
-- Crawls ~20 pages in under a minute
-- Search responses in <50ms
-- Cache reduces API load by 90%+
-- Handles both ikas.dev and ikas.com URLs
+### Performans
+- ~20 sayfayı bir dakikadan kısa sürede tarar
+- Arama yanıtları <50ms'de
+- Önbellek API yükünü %90+ azaltır
+- Hem ikas.dev hem de ikas.com URL'lerini işler
 
-### Value Delivered
-- Eliminates 15-30 minutes of manual documentation copying per project
-- Instant access to GraphQL schemas and mutations
-- Works offline after initial sync
-- Saves 100+ hours per year for active ikas developers
+### Sağlanan Değer
+- Proje başına 15-30 dakikalık manuel dokümantasyon kopyalamayı ortadan kaldırır
+- GraphQL şemalarına ve mutation'lara anında erişim
+- İlk senkronizasyondan sonra çevrimdışı çalışır
+- Aktif ikas geliştiricileri için yılda 100+ saat tasarruf sağlar
 
+[1.1.0]: https://github.com/atapinar/ikas-api-docs-mcp/releases/tag/v1.1.0
 [1.0.0]: https://github.com/atapinar/ikas-api-docs-mcp/releases/tag/v1.0.0
