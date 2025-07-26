@@ -1,4 +1,4 @@
-# ikas-api-docs-mcp
+# ikas api docs mcp
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/atapinar/ikas-api-docs-mcp/releases/tag/v1.0.0)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
